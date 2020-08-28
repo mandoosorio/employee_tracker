@@ -170,11 +170,11 @@ function viewAllEmployees() { //WORKS
     var query = "SELECT first_name, last_name FROM employee";
     connection.query(query, function(err, res) {
         for (i = 0; i < res.length; i++) {
-            console.log(res[i].first_name, res[i].last_name);
+            console.log(res[i].first_name, res[i].last_name, res[i].role_id);
         }
     });
 }
-function viewAllEmployeesByDepartment() { //WORKS but not complete
+function viewAllEmployeesByDepartment() { //WORKS
     inquirer.prompt(
         {
             type: "input",
@@ -183,12 +183,32 @@ function viewAllEmployeesByDepartment() { //WORKS but not complete
         }
     ).then(function(answer) {
         var query = `SELECT id, department_name FROM department`;
+        var deptID;
         connection.query(query, function(err, res) {
             for (i = 0; i < res.length; i++) {
                 if (res[i].department_name == answer.department) {
                     console.log(res[i].id, res[i].department_name);
-                    //now we gotta use this id to get all employees
-                    //perform a join
+                    deptID = res[i].id;
+                }
+            }
+        });
+
+        var query2 = `SELECT id, title, department_id FROM employee_role`;
+        var roleID = [];
+        connection.query(query2, function(err, res) {
+            for (i = 0; i < res.length; i++) {
+                if (res[i].department_id == deptID) {
+                    console.log(res[i].id, res[i].title);
+                    roleID.push(res[i].id);
+                }
+            }
+        });
+
+        var query3 = `SELECT id, first_name, last_name, role_id FROM employee`;
+        connection.query(query3, function(err, res) {
+            for (i = 0; i < res.length; i++) {
+                if (roleID.includes(res[i].role_id) == true) {
+                    console.log("final results", res[i].id, res[i].first_name, res[i].last_name);
                 }
             }
         });
