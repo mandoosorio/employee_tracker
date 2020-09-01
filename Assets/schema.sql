@@ -31,3 +31,5 @@ VALUES ("Armando", "Osorio", 1, "Bob"), ("Potato", "Head", 2, "Bill"), ("Pickle"
 SELECT * FROM department;
 SELECT * FROM employee_role;
 SELECT * FROM employee;
+
+SET SQL_SAFE_UPDATES = 0;

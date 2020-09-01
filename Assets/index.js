@@ -4,8 +4,6 @@ const cTable = require("console.table");
 const Employee = require("./employee");
 const Role = require("./role");
 const Department = require("./department");
-const Manager = require("./manager");
-
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -23,8 +21,10 @@ connection.connect(function(err) {
 
 var departments;
 var managers;
+var allRoles;
+var allEmployees;
 
-function getDepts() {
+function getDepts() { //WORKS
     departments = [];
     var query = "SELECT id, department_name FROM department";
     connection.query(query, function(err, res) {
@@ -44,9 +44,32 @@ function getManagers() { //WORKS ALRIGHT
         }
     });
 }
-function start() {
+function getRoles() { //WORKS
+    allRoles = [];
+    var query = "SELECT id, title, salary, department_id FROM employee_role";
+    connection.query(query, function(err, res) {
+        for (i = 0; i < res.length; i++) {
+            allRoles.push(res[i].title);
+        }
+    });
+}
+function getEmployees() { //WORKS
+    allEmployees = [];
+    var query = "SELECT employee_role.id, employee_role.title, employee_role.salary, employee_role.department_id, employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_name ";
+    query += "FROM employee_role INNER JOIN employee ON (employee_role.id = employee.role_id) ";
+    
+    connection.query(query, function(err, res) {
+        for (var i = 0; i < res.length; i++) {
+          allEmployees.push(res[i].first_name + "" + res[i].last_name);
+        }
+    });
+}
+function start() { //WORKS
     getDepts();
     getManagers();
+    getRoles();
+    getEmployees();
+
     console.log("Welcome to the Employee Manager Application");
     inquirer.prompt({
       name: "choices",
@@ -61,8 +84,8 @@ function start() {
           "View All Employees",
           "View All Employees By Department",
           "View All Employees By Manager",
-          "Update Employee Role",
-          "Update Employee Manager",
+          "View Utilized Budget",
+          "Update Employee",
           "Remove Department",
           "Remove Role",
           "Remove Employee",
@@ -86,10 +109,10 @@ function start() {
             viewAllEmployeesByDepartment();
         } else if (answers.choices === "View All Employees By Manager") {
             viewAllEmployeesByManager();
-        } else if (answers.choices === "Update Employee Role") {
-            updateEmployeeRole();
-        } else if (answers.choices === "Update Employee Manager") {
-            updateEmployeeManager();
+        } else if (answers.choices === "View Utilized Budget") {
+            viewUtilizedBudget();
+        } else if (answers.choices === "Update Employee") {
+            updateEmployee();
         } else if (answers.choices === "Remove Department") {
             removeDepartment();
         } else if (answers.choices === "Remove Role") {
@@ -286,13 +309,198 @@ function viewAllEmployeesByManager() { //WORKS BEAUTIFULLY
         });
     });
 }
-function updateEmployeeRole() {
+function updateEmployee() { //WORKS BEAUTIFULLY
+    inquirer.prompt([
+        {
+            type: "input",
+            name: "firstName",
+            message: "Enter employee's first name:"
+        },
+        {
+            type: "input",
+            name: "lastName",
+            message: "Enter employee's last name:"
+        },
+        {
+            type: "list",
+            name: "action",
+            message: "What data would you like to change?",
+            choices: [
+                "First Name",
+                "Last Name",
+                "Role",
+                "Manager Name"
+            ]
+        }
+    ]).then(function(answers) {
+        var first;
+        var last;
+        var mgr;
+        var role;
+        var action;
+
+        if (answers.action === "First Name") {
+            inquirer.prompt(
+                {
+                    type: "input",
+                    name: "first",
+                    message: "Input updated first name:"
+                }
+            ).then(function(res) {
+                action = "first_name";
+                first = res.first;
+
+                var query = "UPDATE Employee ";
+                query += `SET ${action} = '${res.first}' `;
+                query += `WHERE first_name = '${answers.firstName}' AND last_name = '${answers.lastName}';`;
+
+                connection.query(query, function(err, res) {
+                    console.log(`Employee's ${answers.action} has been updated.`);
+                    start();
+                });
+            });
+        } else if (answers.action === "Last Name") {
+            inquirer.prompt(
+                {
+                    type: "input",
+                    name: "last",
+                    message: "Input updated last name:"
+                }
+            ).then(function(res) {
+                action = "last_name";
+                last = res.last;
+
+                var query = "UPDATE Employee ";
+                query += `SET ${action} = '${res.last}' `;
+                query += `WHERE first_name = '${answers.firstName}' AND last_name = '${answers.lastName}';`;
+
+                connection.query(query, function(err, res) {
+                    console.log(`Employee's ${answers.action} has been updated.`);
+                    start();
+                });
+            });
+        } else if (answers.action === "Role") {
+            inquirer.prompt(
+                {
+                    type: "input",
+                    name: "newRole",
+                    message: "Input updated role id:"
+                }
+            ).then(function(res) {
+                action = "role_id";
+                role = res.newRole;
+
+                var query = "UPDATE Employee ";
+                query += `SET ${action} = '${res.newRole}' `;
+                query += `WHERE first_name = '${answers.firstName}' AND last_name = '${answers.lastName}';`;
+
+                connection.query(query, function(err, res) {
+                    console.log(`Employee's ${answers.action} has been updated.`);
+                    start();
+                });
+            });
+        } else if (answers.action === "Manager Name") {
+            inquirer.prompt(
+                {
+                    type: "input",
+                    name: "newManager",
+                    message: "Input updated manager name:"
+                }
+            ).then(function(res) {
+                action = "manager_name";
+                mgr = res.newManger;
+
+                var query = "UPDATE Employee ";
+                query += `SET ${action} = '${res.newManager}' `;
+                query += `WHERE first_name = '${answers.firstName}' AND last_name = '${answers.lastName}';`;
+
+                connection.query(query, function(err, res) {
+                    console.log(`Employee's ${answers.action} has been updated.`);
+                    start();
+                });
+            });
+        }
+    });
 }
-function updateEmployeeManager() {
+function removeDepartment() { //WORKS BEAUTIFULLY
+    console.log("Departments", departments);
+    inquirer.prompt(
+        {
+            type: "input",
+            name: "deptName",
+            message: "Input department name to be removed:"
+        }
+    ).then(function(res) {
+        query = `DELETE FROM department WHERE department_name = '${res.deptName}';`;
+
+        connection.query(query, function(err, res) {
+            console.log(`Department removed.`);
+            start();
+        });
+    });
 }
-function removeDepartment() {
+function removeRole() { //WORKS DANGEROUSLY
+    console.log("Roles", allRoles);
+    inquirer.prompt(
+        {
+            type: "input",
+            name: "roleName",
+            message: "Input role to be removed:\n(WARNING - Removing a role that is currently assigned to an existing employee will remove the employee's data)"
+        }
+    ).then(function(res) {
+        query = `DELETE FROM employee_role WHERE title = '${res.roleName}';`;
+
+        connection.query(query, function(err, res) {
+            console.log(`Role removed.`);
+            start();
+        });
+    });
 }
-function removeRole() {
+function removeEmployee() { //WORKS BEAUTIFULLY
+    console.log("Employees", allEmployees);
+    inquirer.prompt([
+        {
+            type: "input",
+            name: "firstName",
+            message: "Input employee's first name:"
+        },
+        {
+            type: "input",
+            name: "lastName",
+            message: "Input employee's last name:"
+        }
+    ]).then(function(res) {
+        query = `DELETE FROM employee WHERE first_name = '${res.firstName}' AND last_name = '${res.lastName}';`;
+
+        connection.query(query, function(err, res) {
+            console.log(`Employee removed.`);
+            start();
+        });
+    });
 }
-function removeEmployee() {
+function viewUtilizedBudget() { //WORKS BEAUTIFULLY
+    var salaries = 0;
+
+    console.log("Departments", departments);
+    inquirer.prompt(
+        {
+            type: "input",
+            name: "department",
+            message: "Enter department #:"
+        }
+    ).then(function(answer) {
+        var query = "SELECT department.id, department.department_name, employee_role.id, employee_role.title, employee_role.department_id, employee_role.salary, employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_name ";
+        query += "FROM department INNER JOIN employee_role ON (department.id = employee_role.department_id) ";
+        query += "INNER JOIN employee ON (employee_role.id = employee.role_id) ";
+        query += "WHERE (department.id = ? AND employee_role.department_id = ?) ";
+        query += "ORDER BY department.id";
+
+        connection.query(query, [answer.department, answer.department], function(err, res) {
+            for (var i = 0; i < res.length; i++) {
+               salaries += res[i].salary;
+            }
+            console.log("Salary Total: ", salaries);
+            start();
+        });
+    });
 }
