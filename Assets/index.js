@@ -3,6 +3,9 @@ const inquirer = require("inquirer");
 const cTable = require("console.table");
 const Employee = require("./employee");
 const Role = require("./role");
+const Department = require("./department");
+const Manager = require("./manager");
+
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -19,6 +22,7 @@ connection.connect(function(err) {
 });
 
 var departments;
+var managers;
 
 function getDepts() {
     departments = [];
@@ -29,9 +33,20 @@ function getDepts() {
         }
     });
 }
-
+function getManagers() { //WORKS ALRIGHT
+    managers = [];
+    var query = "SELECT manager_name FROM employee";
+    connection.query(query, function(err, res) {
+        for (i = 0; i < res.length; i++) {
+            if (managers.includes(res[i].manager_name) === false) {
+                managers.push(res[i].manager_name);
+            }
+        }
+    });
+}
 function start() {
     getDepts();
+    getManagers();
     console.log("Welcome to the Employee Manager Application");
     inquirer.prompt({
       name: "choices",
@@ -86,7 +101,7 @@ function start() {
         }
     });
 }
-function addDepartment() { //WORKS
+function addDepartment() { //WORKS BEAUTIFULLY
     inquirer.prompt([
         {
             type: "input",
@@ -96,13 +111,24 @@ function addDepartment() { //WORKS
     ]).then(function(response) {
         var query = `INSERT INTO department (department_name)
         VALUES ("${response.department}");`;
+
         connection.query(query, function(err, res) {
-            console.log("Department added!"); //something to view department;
+            console.log("Department added!");
+        })
+
+        var query2 = "SELECT id, department_name FROM department";
+        connection.query(query2, function(err, res) {
+            var depts = [];
+            for (i = 0; i < res.length; i++) {
+                const department = new Department(res[i].id, res[i].department_name);
+                depts.push(department);
+            }
+            console.table(depts);
             start();
         });
     })
 }
-function addRole() { //WORKS
+function addRole() { //WORKS BEAUTIFULLY
     inquirer.prompt([
         {
             type: "input",
@@ -122,73 +148,82 @@ function addRole() { //WORKS
     ]).then(function(response) {
         var query = `INSERT INTO employee_role (title, salary, department_id)
         VALUES ("${response.title}", ${response.salary}, ${response.department});`;
+        
         connection.query(query, function(err, res) {
-            console.log("Role added!"); //something to view role;
+            console.log("Role added!");
+        });
+
+        var query2 = "SELECT id, title, salary, department_id FROM employee_role";
+        connection.query(query2, function(err, res) {
+            var roles = [];
+            for (i = 0; i < res.length; i++) {
+                const role = new Role(res[i].id, res[i].title, res[i].salary, res[i].department_id);
+                roles.push(role);
+            }
+            console.table(roles);
+            start();
         });
     });
 }
-function addEmployee() { //WORKS
+function addEmployee() { // WORKS ALRIGHT
+    console.log("If Employee role ID does not exist, employee may not be added. Add role first before continuing.");
     inquirer.prompt([
         {
             name: "firstName",
             type: "input",
-            message: "What is the employees first name?",
+            message: "What is the employee's first name?",
         },
         {
             name: "lastName",
             type: "input",
-            message: "What is the employees last name?",
+            message: "What is the employee's last name?",
         },
         {
             name: "role",
-            type: "list",
-            message: "What is the employees role?",
-            choices: [
-                "Sales",
-                "Engineering",
-                "Legal",
-                "Finance",
-                "Human Resources"
-            ]
+            type: "input",
+            message: "What is the employee's role ID?"
         },
         {
             name: "manager",
-            type: "list",
-            message: "Who is the employees manager?",
-            choices: [
-                "Joe",
-                "Mamma"
-            ]
+            type: "input",
+            message: "Who is the employee's manager?"
         }
     ]).then(function(response) {
-        var query = `INSERT INTO employee (first_name, last_name, employee_role, department_id, manager_name)\n
-        VALUES ("${response.firstName}", "${response.lastName}", "${response.role}", 4567, "${response.manager}")`;
+        var query = `INSERT INTO employee (first_name, last_name, role_id, manager_name)
+        VALUES ("${response.firstName}", "${response.lastName}", ${response.role}, "${response.manager}")`;
         connection.query(query, function(err, res) {
             console.log("Employee added!"); //something to view object);
+            start();
         });
     });
 }
-function viewAllDepartments() { //WORKS
+function viewAllDepartments() { //WORKS BEAUTIFULLY
     var query = "SELECT id, department_name FROM department";
     connection.query(query, function(err, res) {
+        var depts = [];
         for (i = 0; i < res.length; i++) {
-            console.log(res[i].id, res[i].department_name);
+            const department = new Department(res[i].id, res[i].department_name);
+            depts.push(department);
         }
+        console.table(depts);
         start();
     });
 }
-function viewAllRoles() { //WORKS
-    var query = "SELECT title, department_id FROM employee_role";
+function viewAllRoles() { //WORKS BEAUTIFULLY
+    var query = "SELECT id, title, salary, department_id FROM employee_role";
     connection.query(query, function(err, res) {
+        var roles = [];
         for (i = 0; i < res.length; i++) {
-            console.log(res[i].title, res[i].department_id);
+            const role = new Role(res[i].id, res[i].title, res[i].salary, res[i].department_id);
+            roles.push(role);
         }
+        console.table(roles);
+        start();
     });
 }
 function viewAllEmployees() { //WORKS BEAUTIFULLY
     var query = "SELECT employee_role.id, employee_role.title, employee_role.salary, employee_role.department_id, employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_name ";
     query += "FROM employee_role INNER JOIN employee ON (employee_role.id = employee.role_id) ";
-    query += "ORDER BY employee_role.id";
     
     connection.query(query, function(err, res) {
         var employees = [];
@@ -226,13 +261,37 @@ function viewAllEmployeesByDepartment() { //WORKS BEAUTIFULLY
         });
     });
 }
-function viewAllEmployeesByManager() {
+function viewAllEmployeesByManager() { //WORKS BEAUTIFULLY
+    console.log("Managers", managers);
+    inquirer.prompt(
+        {
+            type: "input",
+            name: "managerName",
+            message: "Enter manager name:"
+        }
+    ).then(function(answer) {
+        var query = "SELECT employee_role.id, employee_role.title, employee_role.salary, employee_role.department_id, employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_name ";
+        query += "FROM employee_role INNER JOIN employee ON (employee_role.id = employee.role_id) ";
+        
+        connection.query(query, function(err, res) {
+            var employees = [];
+            for (var i = 0; i < res.length; i++) {
+                if (res[i].manager_name == answer.managerName) {
+                    const employee = new Employee(res[i].id, res[i].first_name, res[i].last_name, res[i].title, res[i].salary, res[i].manager_name);
+                    employees.push(employee);
+                }
+            }
+            console.table(employees);
+            start();
+        });
+    });
 }
 function updateEmployeeRole() {
 }
 function updateEmployeeManager() {
 }
-function removeDepartment() {}
+function removeDepartment() {
+}
 function removeRole() {
 }
 function removeEmployee() {
