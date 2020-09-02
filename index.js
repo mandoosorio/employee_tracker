@@ -10,7 +10,7 @@ var connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "",
+    password: "clio2345",
     database: "employeeDB"
 });
 connection.connect(function(err) {
@@ -61,7 +61,7 @@ function getEmployees() { //WORKS
     
     connection.query(query, function(err, res) {
         for (var i = 0; i < res.length; i++) {
-          allEmployees.push(res[i].first_name + "" + res[i].last_name);
+          allEmployees.push(res[i].first_name + " " + res[i].last_name);
         }
     });
 }
