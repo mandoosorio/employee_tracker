@@ -1,9 +1,11 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 const cTable = require("console.table");
-const Employee = require("./js/employee");
-const Role = require("./js/role");
-const Department = require("./js/department");
+const Employee = require("./employee");
+const Role = require("./role");
+const Department = require("./department");
+const Manager = require("./manager");
+
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -132,23 +134,28 @@ function addDepartment() { //WORKS BEAUTIFULLY
             message: "Enter department name:"
         }
     ]).then(function(response) {
-        var query = `INSERT INTO department (department_name)
-        VALUES ("${response.department}");`;
-
-        connection.query(query, function(err, res) {
-            console.log("Department added!");
-        })
-
-        var query2 = "SELECT id, department_name FROM department";
-        connection.query(query2, function(err, res) {
-            var depts = [];
-            for (i = 0; i < res.length; i++) {
-                const department = new Department(res[i].id, res[i].department_name);
-                depts.push(department);
-            }
-            console.table(depts);
+        if (response.department === "") {
+            console.log("Please fill in input.")
             start();
-        });
+        } else {
+            var query = `INSERT INTO department (department_name)
+            VALUES ("${response.department}");`;
+    
+            connection.query(query, function(err, res) {
+                console.log("Department added!");
+            })
+    
+            var query2 = "SELECT id, department_name FROM department";
+            connection.query(query2, function(err, res) {
+                var depts = [];
+                for (i = 0; i < res.length; i++) {
+                    const department = new Department(res[i].id, res[i].department_name);
+                    depts.push(department);
+                }
+                console.table(depts);
+                start();
+            });
+        }
     })
 }
 function addRole() { //WORKS BEAUTIFULLY
@@ -169,55 +176,65 @@ function addRole() { //WORKS BEAUTIFULLY
             message: "Input department ID:"
         }
     ]).then(function(response) {
-        var query = `INSERT INTO employee_role (title, salary, department_id)
-        VALUES ("${response.title}", ${response.salary}, ${response.department});`;
-        
-        connection.query(query, function(err, res) {
-            console.log("Role added!");
-        });
-
-        var query2 = "SELECT id, title, salary, department_id FROM employee_role";
-        connection.query(query2, function(err, res) {
-            var roles = [];
-            for (i = 0; i < res.length; i++) {
-                const role = new Role(res[i].id, res[i].title, res[i].salary, res[i].department_id);
-                roles.push(role);
-            }
-            console.table(roles);
+        if (response.title === "" || response.salary === "" || response.department === "") {
+            console.log("Please fill out all inputs.");
             start();
-        });
+        } else {
+            var query = `INSERT INTO employee_role (title, salary, department_id)
+            VALUES ("${response.title}", ${response.salary}, ${response.department});`;
+            
+            connection.query(query, function(err, res) {
+                console.log("Role added!");
+            });
+    
+            var query2 = "SELECT id, title, salary, department_id FROM employee_role";
+            connection.query(query2, function(err, res) {
+                var roles = [];
+                for (i = 0; i < res.length; i++) {
+                    const role = new Role(res[i].id, res[i].title, res[i].salary, res[i].department_id);
+                    roles.push(role);
+                }
+                console.table(roles);
+                start();
+            });
+        }
     });
 }
 function addEmployee() { // WORKS ALRIGHT
     console.log("If Employee role ID does not exist, employee may not be added. Add role first before continuing.");
     inquirer.prompt([
         {
-            name: "firstName",
             type: "input",
+            name: "firstName",
             message: "What is the employee's first name?",
         },
         {
-            name: "lastName",
             type: "input",
+            name: "lastName",
             message: "What is the employee's last name?",
         },
         {
-            name: "role",
             type: "input",
+            name: "role",
             message: "What is the employee's role ID?"
         },
         {
-            name: "manager",
             type: "input",
+            name: "manager",
             message: "Who is the employee's manager?"
         }
     ]).then(function(response) {
-        var query = `INSERT INTO employee (first_name, last_name, role_id, manager_name)
-        VALUES ("${response.firstName}", "${response.lastName}", ${response.role}, "${response.manager}")`;
-        connection.query(query, function(err, res) {
-            console.log("Employee added!"); //something to view object);
+        if (response.firstName === "" || response.lastName === "" || response.role === "" || response.manager === "") {
+            console.log("Please fill out all inputs.");
             start();
-        });
+        } else {    
+            var query = `INSERT INTO employee (first_name, last_name, role_id, manager_name)
+            VALUES ("${response.firstName}", "${response.lastName}", ${response.role}, "${response.manager}")`;
+            connection.query(query, function(err, res) {
+                console.log("Employee added!"); //something to view object);
+                start();
+            });
+        }
     });
 }
 function viewAllDepartments() { //WORKS BEAUTIFULLY
