@@ -4,7 +4,6 @@ const cTable = require("console.table");
 const Employee = require("./employee");
 const Role = require("./role");
 const Department = require("./department");
-const Manager = require("./manager");
 
 
 var connection = mysql.createConnection({
