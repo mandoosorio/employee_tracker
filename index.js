@@ -1,9 +1,9 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 const cTable = require("console.table");
-const Employee = require("./employee");
-const Role = require("./role");
-const Department = require("./department");
+const Employee = require("./js/employee");
+const Role = require("./js/role");
+const Department = require("./js/department");
 
 
 var connection = mysql.createConnection({
