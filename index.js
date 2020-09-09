@@ -1,6 +1,5 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
-const cTable = require("console.table");
 const Employee = require("./js/employee");
 const Role = require("./js/role");
 const Department = require("./js/department");
@@ -10,7 +9,7 @@ var connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "",
+    password: "clio2345",
     database: "employeeDB"
 });
 connection.connect(function(err) {
