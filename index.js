@@ -3,7 +3,7 @@ const inquirer = require("inquirer");
 const Employee = require("./js/employee");
 const Role = require("./js/role");
 const Department = require("./js/department");
-
+const showBanner = require("node-banner");
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -16,7 +16,10 @@ connection.connect(function(err) {
     if (err) {
         throw err;
     }
-    start();
+    (async() => {
+        await showBanner("Employee Tracker", "", "green");
+        start();
+    })();
 });
 
 var departments;
